@@ -58,33 +58,35 @@ CATERING_CROSSWALK = {
         {"prep_recipe": "Garlic Noodle Sauce (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
 
-    # --- SALADS ---
+    # --- SALADS & DRESSINGS ---
     "Skinny": [
         {"prep_recipe": "Salad Mix - Skinny Cobb (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
-        {"prep_recipe": "Smoked Blue Cheese Vinaigrette (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
+    ],
+    "Skinny - Dressing (oz)": [
+        {"prep_recipe": "Smoked Blue Cheese Vinaigrette (Flower)", "source_col": "Dressing_Oz", "multiplier": 0.03125}, # oz -> Qt (1/32)
     ],
     "Kale": [
         {"prep_recipe": "Salad Mix - Ginger Miso Crunch (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
-        {"prep_recipe": "Ginger Miso Vinaigrette (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
+    ],
+    "Kale - Dressing (oz)": [
+        {"prep_recipe": "Ginger Miso Vinaigrette (Flower)", "source_col": "Dressing_Oz", "multiplier": 0.03125},
     ],
     "Chopped": [
         {"prep_recipe": "Salad Mix - Chopped Veg (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
-        {"prep_recipe": "Oregano Dressing (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
-    # Avo Caesar: IGNORE salad mix, ONLY pull dressing (Row 32 = 64 oz per 8 orders = 8 oz/order = 0.25 Qt)
+    "Chopped - Dressing (oz)": [
+        {"prep_recipe": "Ginger Miso Vinaigrette (Flower)", "source_col": "Dressing_Oz", "multiplier": 0.03125}, # Chopped gets Ginger Miso Vin per user correction
+    ],
     "Avo Caesar - Dressing (oz)": [
-        {"prep_recipe": "Avocado Caesar Dressing (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
+        {"prep_recipe": "Avocado Caesar Dressing (Flower)", "source_col": "Dressing_Oz", "multiplier": 0.03125},
     ],
 
-    # --- PROTEINS ---
+    # --- PROTEINS (Salmon ignored per instructions) ---
     "Chicken": [
         {"prep_recipe": "Marinated Chicken Breast Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
     ],
     "Steak": [
         {"prep_recipe": "Marinated Flank Steak Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
-    ],
-    "Salmon": [
-        {"prep_recipe": "Miso Marinated Salmon (Flower)", "source_col": "Catering_Qty", "multiplier": 10.0},
     ],
     "Tofu": [
         {"prep_recipe": "Marinated Tofu (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
@@ -140,23 +142,17 @@ def extract_catering_demands(cat_file_bytes):
     for cat_item, rules in CATERING_CROSSWALK.items():
         row_idx = CATERING_NAME_MAP.get(cat_item)
         if row_idx:
-            # For dressings (Rows 26, 28, 30, 32), the amount needed is in Col E (Col 5)
-            # For standard items, Col D (Col 4) is the order quantity multiplier
-            if "Dressing" in cat_item:
-                raw_amt = ws.cell(row_idx, 5).value or 0.0 # total oz needed
-                for rule in rules:
-                    prep_rec = rule["prep_recipe"]
-                    multiplier = rule["multiplier"] # e.g. 1/32 to convert oz to Qt
-                    added_qty = float(raw_amt) * multiplier
-                    demands[prep_rec] = demands.get(prep_rec, 0.0) + added_qty
-            else:
-                catering_qty = ws.cell(row_idx, 4).value or 0.0
-                if isinstance(catering_qty, (int, float)) and catering_qty > 0:
-                    for rule in rules:
-                        prep_rec = rule["prep_recipe"]
-                        multiplier = rule["multiplier"]
-                        added_qty = float(catering_qty) * multiplier
-                        demands[prep_rec] = demands.get(prep_rec, 0.0) + added_qty
+            for rule in rules:
+                prep_rec = rule["prep_recipe"]
+                multiplier = rule["multiplier"]
+                if rule["source_col"] == "Dressing_Oz":
+                    raw_amt = ws.cell(row_idx, 5).value or 0.0 # Col E has oz
+                    if isinstance(raw_amt, (int, float)) and raw_amt > 0:
+                        demands[prep_rec] = demands.get(prep_rec, 0.0) + (float(raw_amt) * multiplier)
+                else:
+                    catering_qty = ws.cell(row_idx, 4).value or 0.0 # Col D has order qty
+                    if isinstance(catering_qty, (int, float)) and catering_qty > 0:
+                        demands[prep_rec] = demands.get(prep_rec, 0.0) + (float(catering_qty) * multiplier)
     return cat_date, demands
 
 def parse_shelf_life_days(sl_str):
