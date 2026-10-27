@@ -9,7 +9,7 @@ st.set_page_config(page_title="Catering + Prep Report Integrator", layout="wide"
 st.title("📋 Unified Prep Report & Multi-Day Catering Calculator")
 
 # ==============================================================================
-# MASTER KITCHEN CROSSWALK (Sides, Salads, & Proteins with Raw Yield Math)
+# MASTER KITCHEN CROSSWALK (Sides, Salads, Proteins, & Desserts with 1/2 & 1/2 Split)
 # ==============================================================================
 CATERING_CROSSWALK = {
     # --- SIDES ---
@@ -91,6 +91,22 @@ CATERING_CROSSWALK = {
     ],
     "Shrimp": [
         {"prep_recipe": "Marinated Shrimp Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
+    ],
+
+    # --- DESSERTS ---
+    "Cookies": [
+        {"prep_recipe": "Chocolate Chip Cookies - FLOWER", "source_col": "Catering_Qty", "multiplier": 10.0},
+        {"prep_recipe": "Dessert - Chocolate Chip Cookies Dough (Flower)", "source_col": "Catering_Qty", "multiplier": 10.0},
+    ],
+    "Brownies": [
+        {"prep_recipe": "Double Chocolate Almond Brownie - FLOWER", "source_col": "Catering_Qty", "multiplier": 10.0},
+        {"prep_recipe": "Dessert - Chocolate Almond Brownie Batter (Flower)", "source_col": "Catering_Qty", "multiplier": 10.0},
+    ],
+    "1/2 & 1/2": [
+        {"prep_recipe": "Chocolate Chip Cookies - FLOWER", "source_col": "Catering_Qty", "multiplier": 5.0},
+        {"prep_recipe": "Dessert - Chocolate Chip Cookies Dough (Flower)", "source_col": "Catering_Qty", "multiplier": 5.0},
+        {"prep_recipe": "Double Chocolate Almond Brownie - FLOWER", "source_col": "Catering_Qty", "multiplier": 5.0},
+        {"prep_recipe": "Dessert - Chocolate Almond Brownie Batter (Flower)", "source_col": "Catering_Qty", "multiplier": 5.0},
     ],
 }
 
