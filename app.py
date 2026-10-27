@@ -9,7 +9,7 @@ st.set_page_config(page_title="Catering + Prep Report Integrator", layout="wide"
 st.title("📋 Unified Prep Report & Multi-Day Catering Calculator")
 
 # ==============================================================================
-# MASTER KITCHEN CROSSWALK (Sides, Salads, Proteins, & Desserts with 1/2 & 1/2 Split)
+# MASTER KITCHEN CROSSWALK (Sides, Salads, Proteins, & Desserts)
 # ==============================================================================
 CATERING_CROSSWALK = {
     # --- SIDES ---
@@ -76,7 +76,7 @@ CATERING_CROSSWALK = {
         {"prep_recipe": "Avocado Caesar Dressing (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
 
-    # --- PROTEINS (2.5 lbs = 40 oz; 40 oz ÷ 4.5 oz raw = 8.89 lbs prep; Salmon = 10 portions) ---
+    # --- PROTEINS ---
     "Chicken": [
         {"prep_recipe": "Marinated Chicken Breast Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
     ],
@@ -136,7 +136,7 @@ def extract_catering_demands(cat_file_bytes):
     for cat_item, rules in CATERING_CROSSWALK.items():
         row_idx = CATERING_NAME_MAP.get(cat_item)
         if row_idx:
-            catering_qty = ws.cell(row_idx, 4).value or 0.0 # Column D (Catering Qty multiplier e.g. 8)
+            catering_qty = ws.cell(row_idx, 4).value or 0.0
             if isinstance(catering_qty, (int, float)) and catering_qty > 0:
                 for rule in rules:
                     prep_rec = rule["prep_recipe"]
@@ -217,7 +217,7 @@ if prep_file and cat_files:
             new_dc_val = round((orig_dc_val + d1_cat) * 4) / 4
             new_slm_val = round((orig_slm_val + window_cat_batches) * 4) / 4
 
-            # ONLY update rows with catering demand; keep all unmentioned items untouched!
+            # ONLY update rows AND show in preview if catering actually added volume!
             if d1_cat > 0 or window_cat > 0:
                 ws_prep.cell(r, 11).value = new_dc_val
                 ws_prep.cell(r, 12).value = new_slm_val
@@ -234,7 +234,7 @@ if prep_file and cat_files:
                     "NEW Shelf Life Max (X)": new_slm_val,
                 })
 
-    st.subheader("🔍 Recipes Updated by Catering (All Other Recipes Kept As-Is)")
+    st.subheader("🔍 Only Showing Recipes Changed by Catering")
     st.dataframe(pd.DataFrame(preview_rows), use_container_width=True)
 
     output = BytesIO()
