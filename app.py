@@ -18,7 +18,7 @@ CATERING_CROSSWALK = {
         {"prep_recipe": "Gluten Free Pasta (Flower)", "source_col": "Catering_Qty", "multiplier": 0.12},
     ],
     "Quinoa Corn": [
-        {"prep_recipe": "Creamed Corn Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 1.0}, # Matched to Creamed Corn Prep
+        {"prep_recipe": "Creamed Corn Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 1.0},
     ],
     "Sweets": [
         {"prep_recipe": "Roasted Sweet Potatoes (Flower)", "source_col": "Catering_Qty", "multiplier": 1.54},
@@ -71,8 +71,8 @@ CATERING_CROSSWALK = {
         {"prep_recipe": "Salad Mix - Chopped Veg (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
         {"prep_recipe": "Oregano Dressing (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
-    "Avo Caesar": [
-        {"prep_recipe": "Avocado Chicken Caesar Salad (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
+    # Avo Caesar: IGNORE salad mix, ONLY pull dressing (Row 32 = 64 oz per 8 orders = 8 oz/order = 0.25 Qt)
+    "Avo Caesar - Dressing (oz)": [
         {"prep_recipe": "Avocado Caesar Dressing (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
 
@@ -117,7 +117,11 @@ CATERING_NAME_MAP = {
     "Cauli Risotto": 14, "Olive Oil Veg": 15, "Brussels Sprouts": 16,
     "Flo Cho Chow": 18, "Forbidden": 19, "Chicken Enchiladas": 20, "Miso Glazed Salmon": 21,
     "Chicken Yakisoba": 22, "Mother": 23,
-    "Skinny": 25, "Kale": 27, "Chopped": 29, "Avo Caesar": 31, "Butternut & Pear": 33,
+    "Skinny": 25, "Skinny - Dressing (oz)": 26,
+    "Kale": 27, "Kale - Dressing (oz)": 28,
+    "Chopped": 29, "Chopped - Dressing (oz)": 30,
+    "Avo Caesar": 31, "Avo Caesar - Dressing (oz)": 32,
+    "Butternut & Pear": 33, "Butternut & Pear - Dressing (oz)": 34,
     "Flying Avo": 43, "The 1924": 44, "Tofu \"Banh Mi\"": 45, "Rebel": 46,
     "Chicken": 48, "Steak": 49, "Salmon": 50, "Tofu": 51, "Shrimp": 52,
     "Cookies": 54, "Brownies": 55, "1/2 & 1/2": 56
@@ -136,13 +140,23 @@ def extract_catering_demands(cat_file_bytes):
     for cat_item, rules in CATERING_CROSSWALK.items():
         row_idx = CATERING_NAME_MAP.get(cat_item)
         if row_idx:
-            catering_qty = ws.cell(row_idx, 4).value or 0.0
-            if isinstance(catering_qty, (int, float)) and catering_qty > 0:
+            # For dressings (Rows 26, 28, 30, 32), the amount needed is in Col E (Col 5)
+            # For standard items, Col D (Col 4) is the order quantity multiplier
+            if "Dressing" in cat_item:
+                raw_amt = ws.cell(row_idx, 5).value or 0.0 # total oz needed
                 for rule in rules:
                     prep_rec = rule["prep_recipe"]
-                    multiplier = rule["multiplier"]
-                    added_qty = float(catering_qty) * multiplier
+                    multiplier = rule["multiplier"] # e.g. 1/32 to convert oz to Qt
+                    added_qty = float(raw_amt) * multiplier
                     demands[prep_rec] = demands.get(prep_rec, 0.0) + added_qty
+            else:
+                catering_qty = ws.cell(row_idx, 4).value or 0.0
+                if isinstance(catering_qty, (int, float)) and catering_qty > 0:
+                    for rule in rules:
+                        prep_rec = rule["prep_recipe"]
+                        multiplier = rule["multiplier"]
+                        added_qty = float(catering_qty) * multiplier
+                        demands[prep_rec] = demands.get(prep_rec, 0.0) + added_qty
     return cat_date, demands
 
 def parse_shelf_life_days(sl_str):
@@ -191,7 +205,7 @@ if prep_file and cat_files:
         file_summary.append(f"📁 **{f.name}** -> Date: **{c_date.strftime('%m/%d/%Y')}** (Assigned to **Day {day_offset}**)")
         if day_offset in [1, 2, 3]:
             for rec, qty in c_demands.items():
-                day_demands[day_offset][rec] = day_demands[day_offset][rec] + qty if rec in day_demands[day_offset] else qty
+                day_demands[day_offset][rec] = day_demands[day_offset].get(rec, 0.0) + qty
 
     st.success("\n".join(file_summary))
 
