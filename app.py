@@ -9,7 +9,7 @@ st.set_page_config(page_title="Catering + Prep Report Integrator", layout="wide"
 st.title("📋 Unified Prep Report & Multi-Day Catering Calculator")
 
 # ==============================================================================
-# MASTER KITCHEN CROSSWALK (Sides, Salads, Proteins, & Desserts)
+# MASTER KITCHEN CROSSWALK
 # ==============================================================================
 CATERING_CROSSWALK = {
     # --- SIDES ---
@@ -18,7 +18,7 @@ CATERING_CROSSWALK = {
         {"prep_recipe": "Gluten Free Pasta (Flower)", "source_col": "Catering_Qty", "multiplier": 0.12},
     ],
     "Quinoa Corn": [
-        {"prep_recipe": "Grains - Red Quinoa Prepped (Flower)", "source_col": "Catering_Qty", "multiplier": 6.0},
+        {"prep_recipe": "Creamed Corn Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 1.0}, # Matched to Creamed Corn Prep
     ],
     "Sweets": [
         {"prep_recipe": "Roasted Sweet Potatoes (Flower)", "source_col": "Catering_Qty", "multiplier": 1.54},
@@ -191,7 +191,7 @@ if prep_file and cat_files:
         file_summary.append(f"📁 **{f.name}** -> Date: **{c_date.strftime('%m/%d/%Y')}** (Assigned to **Day {day_offset}**)")
         if day_offset in [1, 2, 3]:
             for rec, qty in c_demands.items():
-                day_demands[day_offset][rec] = day_demands[day_offset].get(rec, 0.0) + qty
+                day_demands[day_offset][rec] = day_demands[day_offset][rec] + qty if rec in day_demands[day_offset] else qty
 
     st.success("\n".join(file_summary))
 
@@ -217,7 +217,6 @@ if prep_file and cat_files:
             new_dc_val = round((orig_dc_val + d1_cat) * 4) / 4
             new_slm_val = round((orig_slm_val + window_cat_batches) * 4) / 4
 
-            # ONLY update rows AND show in preview if catering actually added volume!
             if d1_cat > 0 or window_cat > 0:
                 ws_prep.cell(r, 11).value = new_dc_val
                 ws_prep.cell(r, 12).value = new_slm_val
