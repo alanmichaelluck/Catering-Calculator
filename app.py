@@ -9,73 +9,59 @@ st.set_page_config(page_title="Catering + Prep Report Integrator", layout="wide"
 st.title("📋 Unified Prep Report & Multi-Day Catering Calculator")
 
 # ==============================================================================
-# EXACT KITCHEN CROSSWALK (Based on your master mapping sheet)
+# MASTER KITCHEN CROSSWALK (Sides, Salads, & Proteins with Raw Yield Math)
 # ==============================================================================
-# Maps each Catering Calculator item to its Prep Report sub-recipes & scaling factors.
-# Items marked "Ignore" are intentionally omitted here so they keep default calculations.
 CATERING_CROSSWALK = {
-    # Mac: .3 of a 1/6 pan cheese sauce and 12% of a 4" hotel pan GF pasta (per 1x catering unit)
+    # --- SIDES ---
     "Mac": [
         {"prep_recipe": "Cheese Sauce (Flower)", "source_col": "Catering_Qty", "multiplier": 0.3},
         {"prep_recipe": "Gluten Free Pasta (Flower)", "source_col": "Catering_Qty", "multiplier": 0.12},
     ],
-    # Quinoa Corn: 6 portions
     "Quinoa Corn": [
         {"prep_recipe": "Grains - Red Quinoa Prepped (Flower)", "source_col": "Catering_Qty", "multiplier": 6.0},
     ],
-    # Sweets: 700g roasted sweet potato (~1.54 Lbs or 1.5Qt equivalent)
     "Sweets": [
         {"prep_recipe": "Roasted Sweet Potatoes (Flower)", "source_col": "Catering_Qty", "multiplier": 1.54},
     ],
-    # Smash: 6 portions of Smashed Potatoes
     "Smash": [
         {"prep_recipe": "Smashed Potatoes Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 6.0},
     ],
-    # Broccoli: 6.4 portions of roasted broccoli
     "Broccoli": [
         {"prep_recipe": "Roasted Broccoli Florets - Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 6.4},
     ],
-    # Fruit: 5.7 portions
     "Fruit": [
         {"prep_recipe": "Fruit Salad Mix (Flower)", "source_col": "Catering_Qty", "multiplier": 5.7},
     ],
-    # Brown Rice: 20% of a 1x batch (1x batch = 10 Qt, so 2 Qt per 1x catering)
     "Brown Rice": [
         {"prep_recipe": "Brown Rice Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 2.0},
     ],
-    # Jasmine Rice: 20% of a 1x batch (1x batch = 16 portions, so 3.2 portions per 1x catering)
     "Jasmine Rice": [
         {"prep_recipe": "Jasmine Rice Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 3.2},
     ],
-    # Cauli Risotto: 1qt diced cauli, 1qt cauli cream
     "Cauli Risotto": [
         {"prep_recipe": "Cauliflower Dice & Blanched (Flower)", "source_col": "Catering_Qty", "multiplier": 1.0},
         {"prep_recipe": "Cauliflower Cream (Flower)", "source_col": "Catering_Qty", "multiplier": 1.0},
     ],
-    # Olive Oil Veg: 7.5oz olive oil roasted cauli (~0.23 Qt)
     "Olive Oil Veg": [
         {"prep_recipe": "Olive Oil Roasted Cauliflower (Flower)", "source_col": "Catering_Qty", "multiplier": 0.23},
     ],
-    # Brussels Sprouts: 17.5oz roasted brussel sprouts (~1.1 Lb)
     "Brussels Sprouts": [
         {"prep_recipe": "Roasted Brussels Sprouts (Flower)", "source_col": "Catering_Qty", "multiplier": 1.1},
     ],
-    # Flo Cho Chow: 8oz flo cho chow sauce (= 0.25 Qt)
     "Flo Cho Chow": [
         {"prep_recipe": "Flo Cho Chow Sauce (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
-    # Forbidden: 10 fl oz sesame hoisin sauce (= 0.3125 Qt)
     "Forbidden": [
         {"prep_recipe": "Sesame Hoisin Sauce (Flower)", "source_col": "Catering_Qty", "multiplier": 0.3125},
     ],
-    # Chicken Yakisoba: 8oz garlic noodle sauce (= 0.25 Qt)
     "Chicken Yakisoba": [
         {"prep_recipe": "Garlic Noodle Sauce (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
-    # Salads: 4 portions of respective salad mix + dressing
+
+    # --- SALADS ---
     "Skinny": [
         {"prep_recipe": "Salad Mix - Skinny Cobb (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
-        {"prep_recipe": "Smoked Blue Cheese Vinaigrette (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25}, # 8 oz / 32 oz per Qt
+        {"prep_recipe": "Smoked Blue Cheese Vinaigrette (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
     ],
     "Kale": [
         {"prep_recipe": "Salad Mix - Ginger Miso Crunch (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
@@ -88,6 +74,23 @@ CATERING_CROSSWALK = {
     "Avo Caesar": [
         {"prep_recipe": "Avocado Chicken Caesar Salad (Flower)", "source_col": "Catering_Qty", "multiplier": 4.0},
         {"prep_recipe": "Avocado Caesar Dressing (Flower)", "source_col": "Catering_Qty", "multiplier": 0.25},
+    ],
+
+    # --- PROTEINS (2.5 lbs = 40 oz; 40 oz ÷ 4.5 oz raw = 8.89 lbs prep; Salmon = 10 portions) ---
+    "Chicken": [
+        {"prep_recipe": "Marinated Chicken Breast Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
+    ],
+    "Steak": [
+        {"prep_recipe": "Marinated Flank Steak Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
+    ],
+    "Salmon": [
+        {"prep_recipe": "Miso Marinated Salmon (Flower)", "source_col": "Catering_Qty", "multiplier": 10.0},
+    ],
+    "Tofu": [
+        {"prep_recipe": "Marinated Tofu (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
+    ],
+    "Shrimp": [
+        {"prep_recipe": "Marinated Shrimp Prep (Flower)", "source_col": "Catering_Qty", "multiplier": 8.89},
     ],
 }
 
@@ -198,7 +201,7 @@ if prep_file and cat_files:
             new_dc_val = round((orig_dc_val + d1_cat) * 4) / 4
             new_slm_val = round((orig_slm_val + window_cat_batches) * 4) / 4
 
-            # ONLY update rows that have catering demand attached; leave everything else untouched!
+            # ONLY update rows with catering demand; keep all unmentioned items untouched!
             if d1_cat > 0 or window_cat > 0:
                 ws_prep.cell(r, 11).value = new_dc_val
                 ws_prep.cell(r, 12).value = new_slm_val
